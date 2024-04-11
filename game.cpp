@@ -9,100 +9,92 @@
 class game: public gameplay {
 
 private:
-	sf::Clock clock;
-	float timer;
+	sf::Texture t;
+	sf::Sprite tiles;
 	int score;
-	float delay;
 	int M = 0;
 	int N = 0;
 	int* field;
 	int w = 34;
-	bool ad = true;
 	int colorNum = 1;
 public:	
-	game(int m, int n, int* arr, int wx, float d) {
-		this->M = m;
+	game(int m, int n, int* arr, int wx) {
+		M = m;
 		N = n;
 		field = arr;
 		w = wx;
-		delay = d;
+		score = 0;
 	};
-	void delayer(float k){
-		delay = k;
+
+	void settexture() {
+		t.loadFromFile("C:/Users/panin/Downloads/color.png");
+		// —оздание спрайта
+		sf::Sprite tiles(t);
+	}
+
+	sf::Sprite gettexture() {
+		return tiles;
+	}
+
+	int getscore() {
+		return score;
+	}
+
+	void appear(figure m, Point a[]) {
+		if (a[0].x == 0)
+			for (int i = 0; i < m.getkol(); i++) {
+				a[i].x = m.shape[i] % 3;
+				a[i].y = m.shape[i] / 3;
+			}
 	};
-	void appear(figure m) {
-		if (ad) {// ѕервое по€вление тетрамино на поле?
-			if (m.a[0].x == 0)
-				for (int i = 0; i < m.getkol(); i++) {
-					m.a[i].x = m.shape[i] % 3;
-					m.a[i].y = m.shape[i] / 3;
-				}
-			ad = false;
-		}
-	};
-	bool check(figure m) {
+	bool check(figure m, Point a[]) {
 		for (int i = 0; i < m.getkol(); i++)
-			if (m.a[i].x < 0 || m.a[i].x >= N || m.a[i].y >= M)
+			if (a[i].x < 0 || a[i].x >= N || a[i].y >= M)
 				return 0;
-			else if (field[m.a[i].y * N + m.a[i].x])
+			else if (field[a[i].y * N + a[i].x])
 				return 0;
 		return 1;
 	};
-	void downpress() {
-		delay = 0.05;
-	};
-	void rightpress(figure m) {
+	void rightpress(figure m, int n, Point a[], Point b[]) {
 		for (int i = 0; i < m.getkol(); i++) {
-			m.b[i] = m.a[i];
-			m.a[i].x += 1;
+			b[i] = a[i];
+			a[i].x += n;
 		}
 	};
-	void leftpress(figure m) {
-		for (int i = 0; i < m.getkol(); i++) {
-			m.b[i] = m.a[i];
-			m.a[i].x -= 1;
-		}
-	};
-	void exit(figure m) {
-		if (!check(m)) {
+	void exit(figure m, Point a[], Point b[]) {
+		if (!check(m, a)) {
 			for (int i = 0; i < m.getkol(); i++)
-				m.a[i] = m.b[i];
+				a[i] = b[i];
 		}
 	};
-	void rotate(figure m) {
-		Point p = m.a[1];// указываем центр вращени€
+	void rotate(figure m, Point a[], Point b[]) {
+		Point p = a[1];// указываем центр вращени€
 		for (int i = 0; i < m.getkol(); i++) {
-			int x = m.a[i].y - p.y;// y - y0
-			int y = m.a[i].x - p.x;// x - x0
-			m.a[i].x = p.x - x;
-			m.a[i].y = p.y + y;
-		}exit(m);
+			int x = a[i].y - p.y;// y - y0
+			int y = a[i].x - p.x;// x - x0
+			a[i].x = p.x - x;
+			a[i].y = p.y + y;
+		}exit(m, a, b);
 	};
-	void setdelay(float k) {
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
-			delay = k;
-	};
-	int fall(figure m) {
-		if (timer > delay) {
+	int fall(figure m, Point a[], Point b[], int *n) {
+		
 			// √оризонтальное перемещение
 			for (int i = 0; i < m.getkol(); i++) {
-				m.b[i] = m.a[i];
-				m.a[i].y += 1;
+				b[i] = a[i];
+				a[i].y += 1;
 			}
-
 			// ≈сли вышли за пределы пол€ после перемещени€, то возвращаем старые координаты
-			if (!check(m)) {
+			if (!check(m, a)) {
 				for (int i = 0; i < m.getkol(); i++)
-					field[m.b[i].y * N + m.b[i].x] = colorNum;
+					field[b[i].y * N + b[i].x] = colorNum;
 				colorNum = 1 + rand() % 8;
-				// ѕервое по€вление тетрамино на поле?
+				*n = rand() % 10;
 				for (int i = 0; i < m.getkol(); i++) {
-					m.a[i].x = m.shape[i] % 3;
-					m.a[i].y = m.shape[i] / 3;
+					a[i].x = m.shape[i] % 3;
+					a[i].y = m.shape[i] / 3;
 				}
 			}
-			timer = 0;
-		}return colorNum;
+			return colorNum;
 	};
 	void delet() {
 		int k = M - 1;
@@ -129,10 +121,5 @@ public:
 			}
 			else { return 0; }
 		}
-	};
-	void settimer() {
-		float time = clock.getElapsedTime().asSeconds();
-		clock.restart();
-		timer += time;
 	};
 };
